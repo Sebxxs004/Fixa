@@ -18,11 +18,13 @@ com\fixa\core\model\CategoriaServicio.class
 com\fixa\core\model\PerfilTrabajador.class
 com\fixa\core\model\Usuario.class
 com\fixa\infrastructure\security\FirebaseTokenFilter.class
+com\fixa\presentation\dto\AceptarOfertaRequest.class
 com\fixa\infrastructure\persistence\entity\UsuarioEntity.class
 com\fixa\infrastructure\security\SecurityConfig.class
 com\fixa\infrastructure\persistence\repository\CategoriaServicioRepository.class
 com\fixa\presentation\controller\AuctionController.class
 com\fixa\FixaApplication.class
+com\fixa\core\usecase\AceptarOfertaUseCase.class
 com\fixa\core\model\HistorialEstadosOrden.class
 com\fixa\core\model\OrdenServicio.class
 com\fixa\infrastructure\persistence\entity\TransaccionPagoEntity.class

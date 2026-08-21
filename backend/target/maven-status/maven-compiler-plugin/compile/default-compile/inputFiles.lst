@@ -6,6 +6,7 @@ C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\mod
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\model\TransaccionPago.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\model\Usuario.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\repository\OrdenRepository.java
+C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\usecase\AceptarOfertaUseCase.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\usecase\BroadcastSubastaUseCase.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\usecase\GestionarOrdenUseCase.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\FixaApplication.java
@@ -27,6 +28,7 @@ C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\infrastr
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\infrastructure\security\SecurityConfig.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\presentation\controller\AuctionController.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\presentation\controller\OrdenController.java
+C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\presentation\dto\AceptarOfertaRequest.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\presentation\dto\BroadcastRequest.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\presentation\dto\CambiarEstadoRequest.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\presentation\dto\CrearOrdenRequest.java
