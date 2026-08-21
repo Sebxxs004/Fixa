@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Fixa requiere acceso a tu ubicación cuando la app esté en uso para mostrar tu posición en el mapa y permitirte solicitar servicios locales.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Fixa requiere acceso a tu ubicación en segundo plano para poder rastrear tu camino al servicio si eres trabajador.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
