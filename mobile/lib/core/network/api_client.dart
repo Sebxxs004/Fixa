@@ -4,8 +4,7 @@ import 'auth_interceptor.dart';
 class ApiClient {
   late final Dio dio;
 
-  // Modifica esto según la URL de despliegue local o Cloud Run
-  static const String _baseUrl = 'http://10.0.2.2:8080/api'; // 10.0.2.2 es localhost en el emulador de Android
+  static const String _baseUrl = 'http://10.0.2.2:8080'; // 10.0.2.2 es localhost en el emulador de Android
 
   ApiClient() {
     dio = Dio(

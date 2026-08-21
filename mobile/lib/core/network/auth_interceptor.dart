@@ -2,15 +2,16 @@ import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthInterceptor extends Interceptor {
-  final FirebaseAuth _firebaseAuth;
+  final FirebaseAuth? _firebaseAuth;
 
   AuthInterceptor({FirebaseAuth? firebaseAuth})
-      : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+      : _firebaseAuth = firebaseAuth;
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     try {
-      final user = _firebaseAuth.currentUser;
+      final auth = _firebaseAuth ?? FirebaseAuth.instance;
+      final user = auth.currentUser;
       if (user != null) {
         // Solicitamos de forma asíncrona el Token JWT actual a Firebase
         final token = await user.getIdToken();
