@@ -24,8 +24,10 @@ public class BroadcastSubastaUseCase {
     }
 
     public void ejecutarBroadcast(BroadcastRequest request) {
-        // Generar un ID único para la subasta efímera
-        String subastaId = "subasta_" + UUID.randomUUID().toString();
+        // Leer el ID de subasta generado por el cliente, o usar un fallback en caso de nulo/vacío
+        String subastaId = (request.subastaId() != null && !request.subastaId().isBlank()) 
+                ? request.subastaId() 
+                : "subasta_" + UUID.randomUUID().toString();
 
         // Crear el punto geográfico del cliente en SRID 4326 (x = longitud, y = latitud)
         Point origenCliente = geometryFactory.createPoint(new Coordinate(request.longitud(), request.latitud()));
