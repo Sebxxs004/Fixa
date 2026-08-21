@@ -5,8 +5,11 @@ C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\mod
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\model\PerfilTrabajador.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\model\TransaccionPago.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\model\Usuario.java
+C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\repository\OrdenRepository.java
+C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\core\usecase\GestionarOrdenUseCase.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\FixaApplication.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\infrastructure\firebase\FirebaseConfig.java
+C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\infrastructure\persistence\adapter\OrdenPersistenceAdapter.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\infrastructure\persistence\entity\CategoriaServicioEntity.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\infrastructure\persistence\entity\HistorialEstadosOrdenEntity.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\infrastructure\persistence\entity\OrdenServicioEntity.java
@@ -21,3 +24,7 @@ C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\infrastr
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\infrastructure\persistence\repository\UsuarioRepository.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\infrastructure\security\FirebaseTokenFilter.java
 C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\infrastructure\security\SecurityConfig.java
+C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\presentation\controller\OrdenController.java
+C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\presentation\dto\CambiarEstadoRequest.java
+C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\presentation\dto\CrearOrdenRequest.java
+C:\Users\sebas\Desktop\Repositorios\Fixa\backend\src\main\java\com\fixa\presentation\dto\OrdenResponse.java
