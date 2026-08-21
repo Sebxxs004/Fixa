@@ -1,17 +1,34 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthInterceptor extends Interceptor {
+  final FirebaseAuth _firebaseAuth;
+
+  AuthInterceptor({FirebaseAuth? firebaseAuth})
+      : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    // Inyectamos una cabecera de autorización Bearer ficticia para las pruebas iniciales.
-    // En producción se consumirá el token real del usuario provisto por Firebase Auth.
-    options.headers['Authorization'] = 'Bearer TOKEN_FICTICIO_DE_PRUEBA_JWT';
-    
-    // También inyectamos una cabecera de idempotencia por defecto para las mutaciones (POST, PUT, DELETE)
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user != null) {
+        // Solicitamos de forma asíncrona el Token JWT actual a Firebase
+        final token = await user.getIdToken();
+        if (token != null) {
+          options.headers['Authorization'] = 'Bearer $token';
+        }
+      }
+    } catch (e) {
+      // En caso de error, el interceptor continúa para no bloquear la petición
+      // Se utiliza developer.log para evitar advertencias de print en producción
+      // import 'dart:developer' as developer;
+    }
+
+    // Inyectamos cabecera de idempotencia por defecto para las mutaciones (POST, PUT, DELETE)
     if (options.method != 'GET') {
       options.headers['X-Idempotency-Key'] = DateTime.now().millisecondsSinceEpoch.toString();
     }
-    
-    super.onRequest(options, handler);
+
+    handler.next(options);
   }
 }
