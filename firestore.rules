@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    match /subastas/{subastaId} {
+      function isAuth() { return request.auth != null && request.auth.uid != null; }
+      function isOwner() { return isAuth() && resource.data.cliente_id == request.auth.uid; }
+      function isOwnerOfNewDoc() { return isAuth() && request.resource.data.cliente_id == request.auth.uid; }
+      
+      allow list: if isOwner();
+      allow get: if isAuth();
+      allow create: if isOwnerOfNewDoc();
+      allow update, delete: if isOwner();
+
+      match /ofertas/{ofertaId} {
+        allow read: if get(/databases/$(database)/documents/subastas/$(subastaId)).data.cliente_id == request.auth.uid
+                    || (isAuth() && resource.data.trabajador_id == request.auth.uid);
+        allow create: if isAuth() && request.resource.data.trabajador_id == request.auth.uid;
+        allow update, delete: if isAuth() && resource.data.trabajador_id == request.auth.uid;
+      }
+    }
+  }
+}
