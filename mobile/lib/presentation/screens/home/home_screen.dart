@@ -54,6 +54,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     backgroundColor: Colors.green,
                   ),
                 );
+            } else if (auctionState is AuctionOfferAccepted) {
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  const SnackBar(
+                    content: Text('¡Servicio aceptado! El trabajador va en camino.'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
             } else if (auctionState is AuctionFailure) {
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
@@ -219,6 +228,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                           subtitle: Text(
                                             'Precio: \$${oferta['precio'] ?? '0.0'}',
+                                          ),
+                                          trailing: ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.green,
+                                              foregroundColor: Colors.white,
+                                            ),
+                                            onPressed: () {
+                                              context.read<AuctionBloc>().add(
+                                                    AcceptOfferRequested(
+                                                      subastaId: auctionState.subastaId,
+                                                      trabajadorId: oferta['trabajador_id'] ?? '',
+                                                      montoAcordado: (oferta['precio'] is num)
+                                                          ? (oferta['precio'] as num).toDouble()
+                                                          : double.parse(oferta['precio']?.toString() ?? '0.0'),
+                                                    ),
+                                                  );
+                                            },
+                                            child: const Text('Aceptar'),
                                           ),
                                         );
                                       },

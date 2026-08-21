@@ -14,6 +14,7 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
         _firestoreDataSource = firestoreDataSource,
         super(AuctionInitial()) {
     on<BroadcastRequested>(_onBroadcastRequested);
+    on<AcceptOfferRequested>(_onAcceptOfferRequested);
   }
 
   Future<void> _onBroadcastRequested(
@@ -72,6 +73,42 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
       emit(AuctionFailure(errorMessage));
     } catch (e) {
       emit(AuctionFailure('Error de orquestación de subasta: $e'));
+    }
+  }
+
+  Future<void> _onAcceptOfferRequested(
+    AcceptOfferRequested event,
+    Emitter<AuctionState> emit,
+  ) async {
+    emit(AuctionLoading());
+    try {
+      final response = await _dio.post(
+        '/api/v1/auctions/accept',
+        data: {
+          'subastaId': event.subastaId,
+          'trabajadorId': event.trabajadorId,
+          'montoAcordado': event.montoAcordado,
+        },
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final Map<String, dynamic> orden = response.data;
+        emit(AuctionOfferAccepted(orden));
+      } else {
+        emit(const AuctionFailure('No se pudo consolidar la orden con el proveedor seleccionado.'));
+      }
+    } on DioException catch (e) {
+      String errorMessage = 'Fallo de red al aceptar oferta.';
+      if (e.response != null) {
+        if (e.response!.statusCode == 403) {
+          errorMessage = 'No autorizado para aceptar esta oferta.';
+        } else {
+          errorMessage = 'Error al aceptar oferta: ${e.response!.statusCode}';
+        }
+      }
+      emit(AuctionFailure(errorMessage));
+    } catch (e) {
+      emit(AuctionFailure('Error inesperado al aceptar oferta: $e'));
     }
   }
 }

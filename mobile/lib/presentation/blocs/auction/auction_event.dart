@@ -16,3 +16,18 @@ class BroadcastRequested extends AuctionEvent {
   @override
   List<Object?> get props => [latitude, longitude];
 }
+
+class AcceptOfferRequested extends AuctionEvent {
+  final String subastaId;
+  final String trabajadorId;
+  final double montoAcordado;
+
+  const AcceptOfferRequested({
+    required this.subastaId,
+    required this.trabajadorId,
+    required this.montoAcordado,
+  });
+
+  @override
+  List<Object?> get props => [subastaId, trabajadorId, montoAcordado];
+}

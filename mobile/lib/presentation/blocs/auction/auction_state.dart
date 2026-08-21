@@ -31,3 +31,12 @@ class AuctionFailure extends AuctionState {
   @override
   List<Object?> get props => [message];
 }
+
+class AuctionOfferAccepted extends AuctionState {
+  final Map<String, dynamic> orden;
+
+  const AuctionOfferAccepted(this.orden);
+
+  @override
+  List<Object?> get props => [orden];
+}
