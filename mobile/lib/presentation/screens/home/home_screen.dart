@@ -115,65 +115,122 @@ class _HomeScreenState extends State<HomeScreen> {
                   zoom: 16.0,
                 );
 
-                return Stack(
-                  children: [
-                    GoogleMap(
-                      initialCameraPosition: initialCamera,
-                      myLocationEnabled: true,
-                      myLocationButtonEnabled: false,
-                      zoomControlsEnabled: false,
-                      onMapCreated: (controller) {
-                        _mapController = controller;
-                      },
-                      markers: {
-                        Marker(
-                          markerId: const MarkerId('current_location'),
-                          position: currentLatLng,
-                          infoWindow: const InfoWindow(title: 'Tu Ubicación Actual'),
-                        ),
-                      },
-                    ),
-                    Positioned(
-                      bottom: 24.0,
-                      left: 24.0,
-                      right: 24.0,
-                      child: SafeArea(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepPurple,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.0),
-                                ),
-                                elevation: 4,
+                return BlocBuilder<AuctionBloc, AuctionState>(
+                  builder: (context, auctionState) {
+                    final bool isAuctionActive = auctionState is AuctionActive;
+
+                    return Column(
+                      children: [
+                        // Mapa: Ocupa mitad superior o pantalla completa
+                        Expanded(
+                          flex: isAuctionActive ? 1 : 2,
+                          child: Stack(
+                            children: [
+                              GoogleMap(
+                                initialCameraPosition: initialCamera,
+                                myLocationEnabled: true,
+                                myLocationButtonEnabled: false,
+                                zoomControlsEnabled: false,
+                                onMapCreated: (controller) {
+                                  _mapController = controller;
+                                },
+                                markers: {
+                                  Marker(
+                                    markerId: const MarkerId('current_location'),
+                                    position: currentLatLng,
+                                    infoWindow: const InfoWindow(title: 'Tu Ubicación Actual'),
+                                  ),
+                                },
                               ),
-                              onPressed: () {
-                                // Disparamos el evento de solicitud de broadcast
-                                context.read<AuctionBloc>().add(
-                                      BroadcastRequested(
-                                        latitude: state.latitude,
-                                        longitude: state.longitude,
+                              if (!isAuctionActive)
+                                Positioned(
+                                  bottom: 24.0,
+                                  left: 24.0,
+                                  right: 24.0,
+                                  child: SafeArea(
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.deepPurple,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12.0),
+                                        ),
+                                        elevation: 4,
                                       ),
-                                    );
-                              },
-                              child: const Text(
-                                'Solicitar Servicio Aquí',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                      onPressed: () {
+                                        // Disparamos el evento de solicitud de broadcast
+                                        context.read<AuctionBloc>().add(
+                                              BroadcastRequested(
+                                                latitude: state.latitude,
+                                                longitude: state.longitude,
+                                              ),
+                                            );
+                                      },
+                                      child: const Text(
+                                        'Solicitar Servicio Aquí',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
+                            ],
+                          ),
+                        ),
+                        // Listado inferior de ofertas: Se muestra cuando la subasta está activa
+                        if (isAuctionActive)
+                          Expanded(
+                            flex: 1,
+                            child: Container(
+                              color: Colors.white,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12.0,
+                                      horizontal: 16.0,
+                                    ),
+                                    color: Colors.grey[100],
+                                    child: const Text(
+                                      'Esperando cotizaciones...',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.deepPurple,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: ListView.builder(
+                                      itemCount: auctionState.ofertas.length,
+                                      itemBuilder: (context, index) {
+                                        final oferta = auctionState.ofertas[index];
+                                        return ListTile(
+                                          leading: const Icon(
+                                            Icons.handyman,
+                                            color: Colors.deepPurple,
+                                          ),
+                                          title: Text(
+                                            'Trabajador: ${oferta['trabajador_nombre'] ?? 'Profesional ${index + 1}'}',
+                                          ),
+                                          subtitle: Text(
+                                            'Precio: \$${oferta['precio'] ?? '0.0'}',
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                          ),
+                      ],
+                    );
+                  },
                 );
               }
 

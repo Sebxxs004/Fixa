@@ -1,14 +1,17 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
+import '../../../data/datasources/firestore_data_source.dart';
 import 'auction_event.dart';
 import 'auction_state.dart';
 
 class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
   final Dio _dio;
+  final FirestoreDataSource? _firestoreDataSource;
 
-  AuctionBloc({Dio? dio})
+  AuctionBloc({Dio? dio, FirestoreDataSource? firestoreDataSource})
       : _dio = dio ?? apiClient,
+        _firestoreDataSource = firestoreDataSource,
         super(AuctionInitial()) {
     on<BroadcastRequested>(_onBroadcastRequested);
   }
@@ -19,35 +22,56 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
   ) async {
     emit(AuctionLoading());
     try {
+      final dataSource = _firestoreDataSource ?? FirestoreDataSource();
+      // 1. Crear la sala de subasta en Firestore
+      final String subastaId = await dataSource.crearSubasta(
+        latitud: event.latitude,
+        longitud: event.longitude,
+        categoriaId: 1, // Categoría hardcodeada por ahora (ej. Plomería)
+      );
+
+      // 2. Notificar al backend sobre la nueva subasta para iniciar el broadcast espacial
       final response = await _dio.post(
         '/api/v1/auctions/broadcast',
         data: {
-          'categoriaId': 1, // Categoría hardcodeada por ahora (ej. Plomería)
+          'categoriaId': 1,
           'latitud': event.latitude,
           'longitud': event.longitude,
+          'subastaId': subastaId, // Inyectamos el ID generado por Firestore
         },
       );
 
-      // Si el servidor retorna 202 Accepted (o 200/201 exitosos)
-      if (response.statusCode == 202 || response.statusCode == 200 || response.statusCode == 201) {
-        emit(AuctionBroadcastSuccess());
-      } else {
-        emit(const AuctionFailure('El servidor no pudo procesar la solicitud de subasta.'));
+      if (response.statusCode != 202 && response.statusCode != 200 && response.statusCode != 201) {
+        emit(const AuctionFailure('El backend rechazó el inicio del broadcast de subasta.'));
+        return;
       }
+
+      // Emitir éxito inicial en el broadcast antes de suscribirse al Stream
+      emit(AuctionBroadcastSuccess());
+
+      // 3. Conectarse y escuchar la subcolección de ofertas en tiempo real de Firestore
+      await emit.forEach<List<Map<String, dynamic>>>(
+        dataSource.escucharOfertas(subastaId),
+        onData: (ofertas) {
+          return AuctionActive(subastaId: subastaId, ofertas: ofertas);
+        },
+        onError: (error, stackTrace) {
+          return AuctionFailure('Fallo en el canal de ofertas de Firestore: $error');
+        },
+      );
+
     } on DioException catch (e) {
-      String errorMessage = 'Fallo de conexión con el servidor.';
+      String errorMessage = 'Fallo de red al conectar con el backend.';
       if (e.response != null) {
         if (e.response!.statusCode == 401) {
-          errorMessage = 'Sesión no autorizada. Token de Firebase inválido.';
-        } else if (e.response!.statusCode == 403) {
-          errorMessage = 'Acceso denegado a la subasta.';
+          errorMessage = 'Autorización denegada. Token de Firebase inválido.';
         } else {
-          errorMessage = 'Error del servidor: ${e.response!.statusCode}';
+          errorMessage = 'Error del servidor backend: ${e.response!.statusCode}';
         }
       }
       emit(AuctionFailure(errorMessage));
     } catch (e) {
-      emit(AuctionFailure('Error inesperado: $e'));
+      emit(AuctionFailure('Error de orquestación de subasta: $e'));
     }
   }
 }
