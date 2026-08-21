@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "869765252562",
+    "project_id": "fixa-60235",
+    "storage_bucket": "fixa-60235.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:869765252562:android:7e43068322dac564b9740b",
+        "android_client_info": {
+          "package_name": "com.fixa.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBu0-M4EyiXeA8AlGcdHlQi1nMpnx8TVcs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
