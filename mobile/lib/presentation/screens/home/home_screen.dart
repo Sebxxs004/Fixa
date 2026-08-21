@@ -7,6 +7,7 @@ import '../../blocs/location/location_state.dart';
 import '../../blocs/auction/auction_bloc.dart';
 import '../../blocs/auction/auction_event.dart';
 import '../../blocs/auction/auction_state.dart';
+import '../../widgets/offer_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -218,35 +219,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                       itemCount: auctionState.ofertas.length,
                                       itemBuilder: (context, index) {
                                         final oferta = auctionState.ofertas[index];
-                                        return ListTile(
-                                          leading: const Icon(
-                                            Icons.handyman,
-                                            color: Colors.deepPurple,
-                                          ),
-                                          title: Text(
-                                            'Trabajador: ${oferta['trabajador_nombre'] ?? 'Profesional ${index + 1}'}',
-                                          ),
-                                          subtitle: Text(
-                                            'Precio: \$${oferta['precio'] ?? '0.0'}',
-                                          ),
-                                          trailing: ElevatedButton(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.green,
-                                              foregroundColor: Colors.white,
-                                            ),
-                                            onPressed: () {
-                                              context.read<AuctionBloc>().add(
-                                                    AcceptOfferRequested(
-                                                      subastaId: auctionState.subastaId,
-                                                      trabajadorId: oferta['trabajador_id'] ?? '',
-                                                      montoAcordado: (oferta['precio'] is num)
-                                                          ? (oferta['precio'] as num).toDouble()
-                                                          : double.parse(oferta['precio']?.toString() ?? '0.0'),
-                                                    ),
-                                                  );
-                                            },
-                                            child: const Text('Aceptar'),
-                                          ),
+                                        return OfferCard(
+                                          oferta: oferta,
+                                          onAccept: () {
+                                            context.read<AuctionBloc>().add(
+                                                  AcceptOfferRequested(
+                                                    subastaId: auctionState.subastaId,
+                                                    trabajadorId: oferta['trabajador_id'] ?? '',
+                                                    montoAcordado: (oferta['precio'] is num)
+                                                        ? (oferta['precio'] as num).toDouble()
+                                                        : double.parse(oferta['precio']?.toString() ?? '0.0'),
+                                                  ),
+                                                );
+                                          },
                                         );
                                       },
                                     ),

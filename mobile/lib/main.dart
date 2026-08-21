@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/router/router.dart';
+import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -18,10 +19,7 @@ class FixaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Fixa',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
       routerConfig: goRouter,
     );
   }
