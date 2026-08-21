@@ -33,6 +33,9 @@ public class UsuarioEntity {
     @Column(name = "activo")
     private Boolean activo = true;
 
+    @Column(name = "device_token", length = 255)
+    private String deviceToken;
+
     // Getters y Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -57,4 +60,7 @@ public class UsuarioEntity {
 
     public Boolean getActivo() { return activo; }
     public void setActivo(Boolean activo) { this.activo = activo; }
+
+    public String getDeviceToken() { return deviceToken; }
+    public void setDeviceToken(String deviceToken) { this.deviceToken = deviceToken; }
 }

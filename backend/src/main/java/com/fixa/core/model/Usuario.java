@@ -11,5 +11,6 @@ public record Usuario(
     String email,
     String rol,
     OffsetDateTime fechaCreacion,
-    Boolean activo
+    Boolean activo,
+    String deviceToken
 ) {}
