@@ -14,34 +14,37 @@ class OfferCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Valores por defecto si no vienen en el payload NoSQL
-    final String nombre = oferta['trabajador_nombre'] ?? 'Profesional Verificado';
+    final String nombre =
+        oferta['trabajador_nombre'] ?? 'Profesional Verificado';
     final double calificacion = (oferta['trabajador_calificacion'] is num)
         ? (oferta['trabajador_calificacion'] as num).toDouble()
         : 4.8;
-    final double precio = (oferta['precio'] is num)
-        ? (oferta['precio'] as num).toDouble()
-        : 0.0;
+    final double precio =
+        (oferta['precio'] is num) ? (oferta['precio'] as num).toDouble() : 0.0;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 3,
-      shadowColor: Colors.black.withAlpha(20),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: AppColors.border, width: 1),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            // Avatar del Trabajador con Inicial
+            // Avatar del Trabajador Minimalista
             CircleAvatar(
-              radius: 24,
-              backgroundColor: AppColors.primary.withAlpha(30),
+              radius: 22,
+              backgroundColor: AppColors.surfaceElevated,
               child: const Icon(
-                Icons.person,
-                color: AppColors.primary,
-                size: 28,
+                Icons.person_outline_rounded,
+                color: AppColors.textPrimary,
+                size: 22,
               ),
             ),
-            const SizedBox(width: 16),
-            
+            const SizedBox(width: 14),
+
             // Información del Trabajador
             Expanded(
               child: Column(
@@ -49,67 +52,78 @@ class OfferCard extends StatelessWidget {
                 children: [
                   Text(
                     nombre,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.2,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Row(
                     children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 16),
-                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.star_rounded,
+                        color: AppColors.textPrimary,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 3),
                       Text(
                         calificacion.toStringAsFixed(1),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
-                      const SizedBox(width: 8),
-                      const Text('•'),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       const Text(
-                        'Socio Fixa',
+                        '•',
+                        style: TextStyle(color: AppColors.textMuted),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Verificado',
                         style: TextStyle(
-                          color: AppColors.primary,
+                          color: AppColors.textSecondary,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     '\$${precio.toStringAsFixed(0)}',
                     style: const TextStyle(
-                      fontSize: 18,
+                      fontSize: 17,
                       fontWeight: FontWeight.w900,
-                      color: AppColors.primary,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.3,
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             // Botón de Aceptar
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-              ),
-              onPressed: onAccept,
-              child: const Text(
-                'Aceptar',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.1,
                 ),
               ),
+              onPressed: onAccept,
+              child: const Text('Aceptar'),
             ),
           ],
         ),

@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../blocs/location/location_bloc.dart';
 import '../../blocs/location/location_event.dart';
 import '../../blocs/location/location_state.dart';
+import 'package:go_router/go_router.dart';
 import '../../blocs/auction/auction_bloc.dart';
 import '../../blocs/auction/auction_event.dart';
 import '../../blocs/auction/auction_state.dart';
+import '../../blocs/auth/auth_bloc.dart';
+import '../../blocs/auth/auth_event.dart';
 import '../../widgets/offer_card.dart';
+import '../../../core/theme/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,6 +39,16 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: AppBar(
           title: const Text('Solicitar Servicio'),
           centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout_rounded, size: 20),
+              tooltip: 'Cerrar sesión',
+              onPressed: () {
+                context.read<AuthBloc>().add(AuthLogoutRequested());
+                context.go('/login');
+              },
+            ),
+          ],
         ),
         body: BlocListener<AuctionBloc, AuctionState>(
           listener: (context, auctionState) {
@@ -41,27 +56,40 @@ class _HomeScreenState extends State<HomeScreen> {
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
-                  const SnackBar(
-                    content: Text('Procesando solicitud de subasta...'),
-                    duration: Duration(seconds: 2),
+                  SnackBar(
+                    content: const Text('Procesando solicitud de subasta...'),
+                    backgroundColor: AppColors.primary,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    duration: const Duration(seconds: 2),
                   ),
                 );
             } else if (auctionState is AuctionBroadcastSuccess) {
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
-                  const SnackBar(
-                    content: Text('Buscando profesionales cercanos...'),
-                    backgroundColor: Colors.green,
+                  SnackBar(
+                    content: const Text('Buscando profesionales cercanos...'),
+                    backgroundColor: AppColors.primary,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 );
             } else if (auctionState is AuctionOfferAccepted) {
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
-                  const SnackBar(
-                    content: Text('¡Servicio aceptado! El trabajador va en camino.'),
-                    backgroundColor: Colors.green,
+                  SnackBar(
+                    content: const Text('¡Servicio aceptado! El profesional va en camino.'),
+                    backgroundColor: AppColors.primary,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 );
             } else if (auctionState is AuctionFailure) {
@@ -136,22 +164,52 @@ class _HomeScreenState extends State<HomeScreen> {
                           flex: isAuctionActive ? 1 : 2,
                           child: Stack(
                             children: [
-                              GoogleMap(
-                                initialCameraPosition: initialCamera,
-                                myLocationEnabled: true,
-                                myLocationButtonEnabled: false,
-                                zoomControlsEnabled: false,
-                                onMapCreated: (controller) {
-                                  _mapController = controller;
-                                },
-                                markers: {
-                                  Marker(
-                                    markerId: const MarkerId('current_location'),
-                                    position: currentLatLng,
-                                    infoWindow: const InfoWindow(title: 'Tu Ubicación Actual'),
-                                  ),
-                                },
-                              ),
+                              kIsWeb
+                                  ? Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [Colors.blueGrey[100]!, Colors.blueGrey[200]!],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.map,
+                                              size: 64,
+                                              color: Colors.blueGrey[700],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Vista previa del mapa en Web (Simulación)',
+                                              style: TextStyle(
+                                                color: Colors.blueGrey[800],
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                  : GoogleMap(
+                                      initialCameraPosition: initialCamera,
+                                      myLocationEnabled: true,
+                                      myLocationButtonEnabled: false,
+                                      zoomControlsEnabled: false,
+                                      onMapCreated: (controller) {
+                                        _mapController = controller;
+                                      },
+                                      markers: {
+                                        Marker(
+                                          markerId: const MarkerId('current_location'),
+                                          position: currentLatLng,
+                                          infoWindow: const InfoWindow(title: 'Tu Ubicación Actual'),
+                                        ),
+                                      },
+                                    ),
                               if (!isAuctionActive)
                                 Positioned(
                                   bottom: 24.0,
@@ -160,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: SafeArea(
                                     child: ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.deepPurple,
+                                        backgroundColor: AppColors.primary,
                                         foregroundColor: Colors.white,
                                         padding: const EdgeInsets.symmetric(vertical: 16.0),
                                         shape: RoundedRectangleBorder(
@@ -210,7 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.deepPurple,
+                                        color: AppColors.primary,
                                       ),
                                     ),
                                   ),
