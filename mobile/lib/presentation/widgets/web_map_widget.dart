@@ -24,10 +24,13 @@ class _WebMapWidgetState extends State<WebMapWidget>
   late Animation<double> _pulseAnimation;
   late TextEditingController _addressController;
 
-  late double _currentLat;
-  late double _currentLng;
+  double? _currentLat;
+  double? _currentLng;
   int _zoomLevel = 15;
   bool _isCustomLocation = false;
+
+  double get activeLat => _currentLat ?? widget.latitude;
+  double get activeLng => _currentLng ?? widget.longitude;
 
   @override
   void initState() {
@@ -35,7 +38,7 @@ class _WebMapWidgetState extends State<WebMapWidget>
     _currentLat = widget.latitude;
     _currentLng = widget.longitude;
     _addressController = TextEditingController(
-      text: 'Lat ${_currentLat.toStringAsFixed(4)}, Lng ${_currentLng.toStringAsFixed(4)}',
+      text: 'Lat ${activeLat.toStringAsFixed(4)}, Lng ${activeLng.toStringAsFixed(4)}',
     );
 
     _pulseController = AnimationController(
@@ -72,11 +75,11 @@ class _WebMapWidgetState extends State<WebMapWidget>
 
   void _updateAddressText() {
     _addressController.text =
-        'Lat ${_currentLat.toStringAsFixed(4)}, Lng ${_currentLng.toStringAsFixed(4)}';
+        'Lat ${activeLat.toStringAsFixed(4)}, Lng ${activeLng.toStringAsFixed(4)}';
   }
 
   void _notifyLocationChange() {
-    widget.onLocationChanged?.call(_currentLat, _currentLng);
+    widget.onLocationChanged?.call(activeLat, activeLng);
   }
 
   void _resetToGpsLocation() {
@@ -93,11 +96,11 @@ class _WebMapWidgetState extends State<WebMapWidget>
     // Convierte el desplazamiento en píxeles (dx, dy) en deltas de Latitud y Longitud
     final double mapFactor = 360.0 / (256.0 * pow(2.0, _zoomLevel));
     final double dLng = -details.delta.dx * mapFactor;
-    final double dLat = details.delta.dy * mapFactor * cos(_currentLat * pi / 180.0);
+    final double dLat = details.delta.dy * mapFactor * cos(activeLat * pi / 180.0);
 
     setState(() {
-      _currentLat = (_currentLat + dLat).clamp(-85.0, 85.0);
-      _currentLng = (_currentLng + dLng).clamp(-180.0, 180.0);
+      _currentLat = (activeLat + dLat).clamp(-85.0, 85.0);
+      _currentLng = (activeLng + dLng).clamp(-180.0, 180.0);
       _isCustomLocation = true;
       _updateAddressText();
     });
@@ -123,8 +126,8 @@ class _WebMapWidgetState extends State<WebMapWidget>
         final double width = constraints.maxWidth;
         final double height = constraints.maxHeight;
 
-        final double exactX = _lngToTileX(_currentLng, _zoomLevel);
-        final double exactY = _latToTileY(_currentLat, _zoomLevel);
+        final double exactX = _lngToTileX(activeLng, _zoomLevel);
+        final double exactY = _latToTileY(activeLat, _zoomLevel);
 
         final int centerTileX = exactX.floor();
         final int centerTileY = exactY.floor();
