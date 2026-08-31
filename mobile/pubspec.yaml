@@ -55,6 +55,9 @@ dependencies:
   google_maps_flutter: ^2.11.1
   permission_handler: ^11.3.1
 
+  # Media & Camera
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
