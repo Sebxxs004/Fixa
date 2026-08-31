@@ -6,7 +6,6 @@ import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../../widgets/custom_text_field.dart';
-import '../../widgets/role_selector.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,8 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  UserRole _selectedRole = UserRole.cliente;
   bool _obscurePassword = true;
 
   @override
@@ -32,14 +29,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _onLoginPressed() {
     if (_formKey.currentState?.validate() ?? false) {
-      final roleString =
-          _selectedRole == UserRole.cliente ? 'CLIENTE' : 'TRABAJADOR';
-
       context.read<AuthBloc>().add(
             AuthLoginRequested(
               email: _emailController.text,
               password: _passwordController.text,
-              role: roleString,
             ),
           );
     }
@@ -136,17 +129,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      // Selector de Rol (Usuario vs Trabajador)
-                      RoleSelector(
-                        selectedRole: _selectedRole,
-                        onRoleChanged: (role) {
-                          setState(() {
-                            _selectedRole = role;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 24),
-
                       // Campo de Correo Electrónico
                       CustomTextField(
                         controller: _emailController,
@@ -216,11 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           AlwaysStoppedAnimation<Color>(Colors.white),
                                     ),
                                   )
-                                : Text(
-                                    _selectedRole == UserRole.cliente
-                                        ? 'Iniciar como Usuario'
-                                        : 'Iniciar como Trabajador',
-                                  ),
+                                : const Text('Iniciar Sesión'),
                           );
                         },
                       ),
@@ -252,9 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Botón para ir a Registro
                       OutlinedButton(
                         onPressed: () {
-                          context.push(
-                            '/register?role=${_selectedRole == UserRole.cliente ? "cliente" : "trabajador"}',
-                          );
+                          context.push('/register');
                         },
                         child: const Text('Crear una cuenta nueva'),
                       ),

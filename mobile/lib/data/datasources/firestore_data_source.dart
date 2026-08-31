@@ -16,6 +16,9 @@ class FirestoreDataSource {
     required double latitud,
     required double longitud,
     required int categoriaId,
+    String? categoriaNombre,
+    String? descripcion,
+    List<String> fotos = const [],
   }) async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -25,6 +28,9 @@ class FirestoreDataSource {
     final docRef = await _firestore.collection('subastas').add({
       'cliente_id': currentUser.uid,
       'categoria_id': categoriaId,
+      'categoria_nombre': categoriaNombre ?? 'General',
+      'descripcion': descripcion ?? '',
+      'fotos': fotos,
       'latitud': latitud,
       'longitud': longitud,
       'estado': 'ABIERTA',
@@ -44,7 +50,7 @@ class FirestoreDataSource {
         .map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data();
-        data['id'] = doc.id; // Agregamos el ID del documento al mapa
+        data['id'] = doc.id;
         return data;
       }).toList();
     });

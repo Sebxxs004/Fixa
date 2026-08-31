@@ -6,15 +6,9 @@ import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../../widgets/custom_text_field.dart';
-import '../../widgets/role_selector.dart';
 
 class RegisterScreen extends StatefulWidget {
-  final String? initialRole;
-
-  const RegisterScreen({
-    super.key,
-    this.initialRole,
-  });
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -26,19 +20,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _categoryController = TextEditingController();
 
-  late UserRole _selectedRole;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedRole = widget.initialRole == 'trabajador'
-        ? UserRole.trabajador
-        : UserRole.cliente;
-  }
 
   @override
   void dispose() {
@@ -46,24 +30,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _categoryController.dispose();
     super.dispose();
   }
 
   void _onRegisterPressed() {
     if (_formKey.currentState?.validate() ?? false) {
-      final roleString =
-          _selectedRole == UserRole.cliente ? 'CLIENTE' : 'TRABAJADOR';
-
       context.read<AuthBloc>().add(
             AuthRegisterRequested(
               name: _nameController.text,
               email: _emailController.text,
               password: _passwordController.text,
-              role: roleString,
-              category: _selectedRole == UserRole.trabajador
-                  ? _categoryController.text.trim()
-                  : null,
             ),
           );
     }
@@ -138,58 +114,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        'Únete a Fixa seleccionando el tipo de perfil',
+                        'Regístrate para acceder a los servicios de Fixa',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,
                         ),
                       ),
-                      const SizedBox(height: 24),
-
-                      // Selector de Rol
-                      RoleSelector(
-                        selectedRole: _selectedRole,
-                        onRoleChanged: (role) {
-                          setState(() {
-                            _selectedRole = role;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 28),
 
                       // Nombre Completo
                       CustomTextField(
                         controller: _nameController,
-                        label: _selectedRole == UserRole.cliente
-                            ? 'Nombre Completo'
-                            : 'Nombre o Nombre Comercial',
+                        label: 'Nombre Completo',
                         hint: 'Juan Pérez',
                         prefixIcon: Icons.person_outline_rounded,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Por favor ingresa tu nombre';
+                            return 'Por favor ingresa tu nombre completo';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
-
-                      // Categoría/Especialidad (Sólo para trabajadores)
-                      if (_selectedRole == UserRole.trabajador) ...[
-                        CustomTextField(
-                          controller: _categoryController,
-                          label: 'Especialidad / Oficio',
-                          hint: 'Ej. Plomería, Electricidad, Cerrajería',
-                          prefixIcon: Icons.handyman_outlined,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Por favor especifica tu especialidad';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                      ],
 
                       // Correo Electrónico
                       CustomTextField(
@@ -294,11 +240,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           AlwaysStoppedAnimation<Color>(Colors.white),
                                     ),
                                   )
-                                : Text(
-                                    _selectedRole == UserRole.cliente
-                                        ? 'Registrarme como Usuario'
-                                        : 'Registrarme como Trabajador',
-                                  ),
+                                : const Text('Crear Cuenta'),
                           );
                         },
                       ),

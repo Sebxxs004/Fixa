@@ -10,11 +10,29 @@ abstract class AuctionEvent extends Equatable {
 class BroadcastRequested extends AuctionEvent {
   final double latitude;
   final double longitude;
+  final int categoriaId;
+  final String categoriaNombre;
+  final String descripcion;
+  final List<String> fotos;
 
-  const BroadcastRequested({required this.latitude, required this.longitude});
+  const BroadcastRequested({
+    required this.latitude,
+    required this.longitude,
+    required this.categoriaId,
+    required this.categoriaNombre,
+    required this.descripcion,
+    this.fotos = const [],
+  });
 
   @override
-  List<Object?> get props => [latitude, longitude];
+  List<Object?> get props => [
+        latitude,
+        longitude,
+        categoriaId,
+        categoriaNombre,
+        descripcion,
+        fotos,
+      ];
 }
 
 class AcceptOfferRequested extends AuctionEvent {

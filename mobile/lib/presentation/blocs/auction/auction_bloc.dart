@@ -24,26 +24,36 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
     emit(AuctionLoading());
     try {
       final dataSource = _firestoreDataSource ?? FirestoreDataSource();
-      // 1. Crear la sala de subasta en Firestore
+
+      // 1. Crear la sala de subasta en Firestore con categoría, descripción y evidencia fotográfica
       final String subastaId = await dataSource.crearSubasta(
         latitud: event.latitude,
         longitud: event.longitude,
-        categoriaId: 1, // Categoría hardcodeada por ahora (ej. Plomería)
+        categoriaId: event.categoriaId,
+        categoriaNombre: event.categoriaNombre,
+        descripcion: event.descripcion,
+        fotos: event.fotos,
       );
 
       // 2. Notificar al backend sobre la nueva subasta para iniciar el broadcast espacial
       final response = await _dio.post(
         '/api/v1/auctions/broadcast',
         data: {
-          'categoriaId': 1,
+          'categoriaId': event.categoriaId,
+          'categoriaNombre': event.categoriaNombre,
+          'descripcion': event.descripcion,
+          'fotos': event.fotos,
           'latitud': event.latitude,
           'longitud': event.longitude,
-          'subastaId': subastaId, // Inyectamos el ID generado por Firestore
+          'subastaId': subastaId,
         },
       );
 
-      if (response.statusCode != 202 && response.statusCode != 200 && response.statusCode != 201) {
-        emit(const AuctionFailure('El backend rechazó el inicio del broadcast de subasta.'));
+      if (response.statusCode != 202 &&
+          response.statusCode != 200 &&
+          response.statusCode != 201) {
+        emit(const AuctionFailure(
+            'El backend rechazó el inicio del broadcast de subasta.'));
         return;
       }
 
@@ -57,22 +67,12 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
           return AuctionActive(subastaId: subastaId, ofertas: ofertas);
         },
         onError: (error, stackTrace) {
-          return AuctionFailure('Fallo en el canal de ofertas de Firestore: $error');
+          return AuctionFailure(
+              'Fallo en el canal de ofertas de Firestore: $error');
         },
       );
-
-    } on DioException catch (e) {
-      String errorMessage = 'Fallo de red al conectar con el backend.';
-      if (e.response != null) {
-        if (e.response!.statusCode == 401) {
-          errorMessage = 'Autorización denegada. Token de Firebase inválido.';
-        } else {
-          errorMessage = 'Error del servidor backend: ${e.response!.statusCode}';
-        }
-      }
-      emit(AuctionFailure(errorMessage));
     } catch (e) {
-      emit(AuctionFailure('Error de orquestación de subasta: $e'));
+      emit(AuctionFailure('Fallo al transmitir la subasta: ${e.toString()}'));
     }
   }
 
@@ -91,24 +91,19 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
         },
       );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final Map<String, dynamic> orden = response.data;
-        emit(AuctionOfferAccepted(orden));
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> data =
+            (response.data is Map<String, dynamic>)
+                ? response.data
+                : {'subastaId': event.subastaId, 'status': 'ACEPTADA_EN_CAMINO'};
+
+        emit(AuctionOfferAccepted(data));
       } else {
-        emit(const AuctionFailure('No se pudo consolidar la orden con el proveedor seleccionado.'));
+        emit(const AuctionFailure(
+            'No se pudo procesar la aceptación de la oferta.'));
       }
-    } on DioException catch (e) {
-      String errorMessage = 'Fallo de red al aceptar oferta.';
-      if (e.response != null) {
-        if (e.response!.statusCode == 403) {
-          errorMessage = 'No autorizado para aceptar esta oferta.';
-        } else {
-          errorMessage = 'Error al aceptar oferta: ${e.response!.statusCode}';
-        }
-      }
-      emit(AuctionFailure(errorMessage));
     } catch (e) {
-      emit(AuctionFailure('Error inesperado al aceptar oferta: $e'));
+      emit(AuctionFailure('Error al aceptar la oferta: ${e.toString()}'));
     }
   }
 }

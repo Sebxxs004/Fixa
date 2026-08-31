@@ -17,10 +17,7 @@ final goRouter = GoRouter(
     ),
     GoRoute(
       path: '/register',
-      builder: (context, state) {
-        final initialRole = state.uri.queryParameters['role'];
-        return RegisterScreen(initialRole: initialRole);
-      },
+      builder: (context, state) => const RegisterScreen(),
     ),
     GoRoute(
       path: '/home',

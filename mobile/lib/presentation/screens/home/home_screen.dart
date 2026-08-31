@@ -12,6 +12,7 @@ import '../../blocs/auction/auction_state.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../widgets/offer_card.dart';
+import '../../widgets/service_request_sheet.dart';
 import '../../../core/theme/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -227,13 +228,30 @@ class _HomeScreenState extends State<HomeScreen> {
                                         elevation: 4,
                                       ),
                                       onPressed: () {
-                                        // Disparamos el evento de solicitud de broadcast
-                                        context.read<AuctionBloc>().add(
-                                              BroadcastRequested(
-                                                latitude: state.latitude,
-                                                longitude: state.longitude,
-                                              ),
-                                            );
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (sheetContext) => ServiceRequestSheet(
+                                            onSubmit: ({
+                                              required int categoriaId,
+                                              required String categoriaNombre,
+                                              required String descripcion,
+                                              required List<String> fotos,
+                                            }) {
+                                              context.read<AuctionBloc>().add(
+                                                    BroadcastRequested(
+                                                      latitude: state.latitude,
+                                                      longitude: state.longitude,
+                                                      categoriaId: categoriaId,
+                                                      categoriaNombre: categoriaNombre,
+                                                      descripcion: descripcion,
+                                                      fotos: fotos,
+                                                    ),
+                                                  );
+                                            },
+                                          ),
+                                        );
                                       },
                                       child: const Text(
                                         'Solicitar Servicio Aquí',
