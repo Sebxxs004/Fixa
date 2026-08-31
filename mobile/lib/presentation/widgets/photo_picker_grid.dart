@@ -16,7 +16,7 @@ class PhotoPickerGrid extends StatelessWidget {
     this.maxPhotos = 5,
   });
 
-  Future<void> _pickImage(ImageSource source) async {
+  Future<void> _pickImage(BuildContext context, ImageSource source) async {
     if (photos.length >= maxPhotos) return;
 
     try {
@@ -31,30 +31,16 @@ class PhotoPickerGrid extends StatelessWidget {
         final updated = List<String>.from(photos)..add(image.path);
         onPhotosChanged(updated);
       }
-    } catch (_) {
-      // Fallback seguro de muestra para entornos sin cámara física / tests
-      _addPhotoMock(source);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No fue posible acceder a la cámara o galería: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
-  }
-
-  void _addPhotoMock(ImageSource source) {
-    final sampleCameraImages = [
-      'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=400&q=80',
-      'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=400&q=80',
-      'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=400&q=80',
-    ];
-
-    final sampleGalleryImages = [
-      'https://images.unsplash.com/photo-1505798577917-a65157d3320a?auto=format&fit=crop&w=400&q=80',
-      'https://images.unsplash.com/photo-1542013936693-884638332954?auto=format&fit=crop&w=400&q=80',
-    ];
-
-    final list = source == ImageSource.camera
-        ? sampleCameraImages
-        : sampleGalleryImages;
-    final String nextImage = list[photos.length % list.length];
-    final updated = List<String>.from(photos)..add(nextImage);
-    onPhotosChanged(updated);
   }
 
   void _removePhoto(int index) {
@@ -103,7 +89,7 @@ class PhotoPickerGrid extends StatelessWidget {
             InkWell(
               onTap: () {
                 Navigator.of(ctx).pop();
-                _pickImage(ImageSource.camera);
+                _pickImage(context, ImageSource.camera);
               },
               borderRadius: BorderRadius.circular(12),
               child: Container(
@@ -182,7 +168,7 @@ class PhotoPickerGrid extends StatelessWidget {
             InkWell(
               onTap: () {
                 Navigator.of(ctx).pop();
-                _pickImage(ImageSource.gallery);
+                _pickImage(context, ImageSource.gallery);
               },
               borderRadius: BorderRadius.circular(12),
               child: Container(

@@ -13,6 +13,7 @@ import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../widgets/offer_card.dart';
 import '../../widgets/service_request_sheet.dart';
+import '../../widgets/web_map_widget.dart';
 import '../../../core/theme/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -166,34 +167,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Stack(
                             children: [
                               kIsWeb
-                                  ? Container(
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [Colors.blueGrey[100]!, Colors.blueGrey[200]!],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        ),
-                                      ),
-                                      child: Center(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.map,
-                                              size: 64,
-                                              color: Colors.blueGrey[700],
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'Vista previa del mapa en Web (Simulación)',
-                                              style: TextStyle(
-                                                color: Colors.blueGrey[800],
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                  ? WebMapWidget(
+                                      latitude: state.latitude,
+                                      longitude: state.longitude,
                                     )
                                   : GoogleMap(
                                       initialCameraPosition: initialCamera,
