@@ -27,18 +27,20 @@ class _WebMapWidgetState extends State<WebMapWidget>
   double? _currentLat;
   double? _currentLng;
   int _zoomLevel = 15;
-  bool _isCustomLocation = false;
+  bool? _isCustomLocation;
 
   double get activeLat => _currentLat ?? widget.latitude;
   double get activeLng => _currentLng ?? widget.longitude;
+  bool get isCustomLocation => _isCustomLocation ?? false;
 
   @override
   void initState() {
     super.initState();
     _currentLat = widget.latitude;
     _currentLng = widget.longitude;
+    _isCustomLocation = false;
     _addressController = TextEditingController(
-      text: 'Lat ${activeLat.toStringAsFixed(4)}, Lng ${activeLng.toStringAsFixed(4)}',
+      text: _formatAddress(activeLat, activeLng),
     );
 
     _pulseController = AnimationController(
@@ -56,7 +58,7 @@ class _WebMapWidgetState extends State<WebMapWidget>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.latitude != widget.latitude ||
         oldWidget.longitude != widget.longitude) {
-      if (!_isCustomLocation) {
+      if (!isCustomLocation) {
         setState(() {
           _currentLat = widget.latitude;
           _currentLng = widget.longitude;
@@ -73,9 +75,18 @@ class _WebMapWidgetState extends State<WebMapWidget>
     super.dispose();
   }
 
+  String _formatAddress(double lat, double lng) {
+    if (lat > 7.85 && lat < 7.95 && lng > -72.55 && lng < -72.45) {
+      if (lat > 7.895) return 'Av. 5 #10-24, Centro, Cúcuta';
+      if (lat > 7.888) return 'Av. Gran Colombia #12-40, Cúcuta';
+      if (lat > 7.880) return 'Barrio Caobos, Cúcuta';
+      return 'Zona Centro, Cúcuta';
+    }
+    return 'Calle Principal, Sector Urbano';
+  }
+
   void _updateAddressText() {
-    _addressController.text =
-        'Lat ${activeLat.toStringAsFixed(4)}, Lng ${activeLng.toStringAsFixed(4)}';
+    _addressController.text = _formatAddress(activeLat, activeLng);
   }
 
   void _notifyLocationChange() {
@@ -214,7 +225,7 @@ class _WebMapWidgetState extends State<WebMapWidget>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              _isCustomLocation
+                              isCustomLocation
                                   ? Icons.pin_drop_rounded
                                   : Icons.my_location_rounded,
                               size: 13,
@@ -222,7 +233,7 @@ class _WebMapWidgetState extends State<WebMapWidget>
                             ),
                             const SizedBox(width: 5),
                             Text(
-                              _isCustomLocation
+                              isCustomLocation
                                   ? 'Ubicación Elegida'
                                   : 'Tu Ubicación GPS',
                               style: const TextStyle(
@@ -327,7 +338,7 @@ class _WebMapWidgetState extends State<WebMapWidget>
                             },
                           ),
                         ),
-                        if (_isCustomLocation)
+                        if (isCustomLocation)
                           IconButton(
                             icon: const Icon(Icons.close_rounded,
                                 size: 16, color: AppColors.textSecondary),
@@ -346,7 +357,7 @@ class _WebMapWidgetState extends State<WebMapWidget>
                   child: Column(
                     children: [
                       // Botón Mi Ubicación GPS
-                      if (_isCustomLocation) ...[
+                      if (isCustomLocation) ...[
                         FloatingActionButton.small(
                           heroTag: 'my_gps_location',
                           backgroundColor: AppColors.primary,

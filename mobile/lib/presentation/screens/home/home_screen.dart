@@ -9,8 +9,6 @@ import 'package:go_router/go_router.dart';
 import '../../blocs/auction/auction_bloc.dart';
 import '../../blocs/auction/auction_event.dart';
 import '../../blocs/auction/auction_state.dart';
-import '../../blocs/auth/auth_bloc.dart';
-import '../../blocs/auth/auth_event.dart';
 import '../../widgets/offer_card.dart';
 import '../../widgets/service_request_sheet.dart';
 import '../../widgets/web_map_widget.dart';
@@ -45,11 +43,10 @@ class _HomeScreenState extends State<HomeScreen> {
           centerTitle: true,
           actions: [
             IconButton(
-              icon: const Icon(Icons.logout_rounded, size: 20),
-              tooltip: 'Cerrar sesión',
+              icon: const Icon(Icons.person_outline_rounded, size: 22),
+              tooltip: 'Mi Perfil',
               onPressed: () {
-                context.read<AuthBloc>().add(AuthLogoutRequested());
-                context.go('/login');
+                context.push('/profile');
               },
             ),
           ],
