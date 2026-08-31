@@ -25,6 +25,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   GoogleMapController? _mapController;
+  double? _selectedLat;
+  double? _selectedLng;
 
   @override
   Widget build(BuildContext context) {
@@ -170,6 +172,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ? WebMapWidget(
                                       latitude: state.latitude,
                                       longitude: state.longitude,
+                                      onLocationChanged: (lat, lng) {
+                                        _selectedLat = lat;
+                                        _selectedLng = lng;
+                                      },
                                     )
                                   : GoogleMap(
                                       initialCameraPosition: initialCamera,
@@ -217,8 +223,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                             }) {
                                               context.read<AuctionBloc>().add(
                                                     BroadcastRequested(
-                                                      latitude: state.latitude,
-                                                      longitude: state.longitude,
+                                                      latitude: _selectedLat ?? state.latitude,
+                                                      longitude: _selectedLng ?? state.longitude,
                                                       categoriaId: categoriaId,
                                                       categoriaNombre: categoriaNombre,
                                                       descripcion: descripcion,
