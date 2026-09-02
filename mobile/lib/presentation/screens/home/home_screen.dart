@@ -14,6 +14,7 @@ import '../../widgets/offer_card.dart';
 import '../../widgets/service_request_sheet.dart';
 import '../../widgets/web_map_widget.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/datasources/firestore_data_source.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,7 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
   double? _selectedLng;
 
   bool _isWorkerMode = false;
-  String _workerCategory = 'Plomería';
+  bool _isWorkerRegistered = false;
+  String? _workerCategory;
   final TextEditingController _offerPriceController = TextEditingController();
 
   @override
@@ -36,6 +38,139 @@ class _HomeScreenState extends State<HomeScreen> {
     _mapController?.dispose();
     _offerPriceController.dispose();
     super.dispose();
+  }
+
+  void _showWorkerRegistrationModal(BuildContext context) {
+    String selectedCategory = 'Plomería';
+    final categories = [
+      'Plomería',
+      'Electricidad',
+      'Cerrajería',
+      'Pintura',
+      'Carpintería',
+      'Climatización',
+      'Reparación General',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '¡Trabaja con Fixa!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.4,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Selecciona tu especialidad u oficio para comenzar a recibir solicitudes de servicio en tu zona.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              const Text(
+                'Selecciona tu Oficio o Especialidad:',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: categories.map((cat) {
+                  final isSelected = cat == selectedCategory;
+                  return ChoiceChip(
+                    label: Text(cat),
+                    selected: isSelected,
+                    selectedColor: AppColors.primary,
+                    backgroundColor: AppColors.surfaceElevated,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : AppColors.textPrimary,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                    onSelected: (selected) {
+                      if (selected) {
+                        setModalState(() {
+                          selectedCategory = cat;
+                        });
+                      }
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 28),
+
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  setState(() {
+                    _isWorkerRegistered = true;
+                    _workerCategory = selectedCategory;
+                    _isWorkerMode = true;
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: AppColors.primary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      content: Text(
+                        '¡Registro completado! Ahora estás registrado como trabajador en $selectedCategory.',
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Completar Registro de Trabajador'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -196,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         // Mapa: Ocupa mitad superior o pantalla completa
                         Expanded(
-                          flex: isAuctionActive ? 1 : 2,
+                          flex: (isAuctionActive || _isWorkerMode) ? 1 : 2,
                           child: Stack(
                             children: [
                               kIsWeb
@@ -283,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         // MODO TRABAJADOR vs MODO CLIENTE
                         if (_isWorkerMode) ...[
-                          // PANEL DEL TRABAJADOR CON FILTRADO POR RUBRO
+                          // PANEL DEL TRABAJADOR
                           Expanded(
                             flex: 1,
                             child: _buildWorkerAlertPanel(context, auctionState),
@@ -354,15 +489,87 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // WIDGET DEL PANEL DE TRABAJADOR CON FILTRADO POR RUBRO COINCIDENCIAL
+  // WIDGET DEL PANEL DE TRABAJADOR CON VALIDADOR FIRESTORE EN TIEMPO REAL
   Widget _buildWorkerAlertPanel(BuildContext context, AuctionState auctionState) {
+    // CASO A: EL USUARIO AÚN NO SE HA REGISTRADO COMO TRABAJADOR
+    if (!_isWorkerRegistered || _workerCategory == null) {
+      return Container(
+        color: AppColors.surface,
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+        child: Center(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: const BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.work_outline_rounded,
+                    size: 32,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  '¡Aún no estás registrado como trabajador!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Para recibir solicitudes de servicio y enviar cotizaciones en tu zona, primero debes registrar tu especialidad u oficio.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => _showWorkerRegistrationModal(context),
+                  icon: const Icon(Icons.badge_rounded, size: 16),
+                  label: const Text(
+                    'Registrarme como Trabajador',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // CASO B: EL USUARIO YA ESTÁ REGISTRADO COMO TRABAJADOR
+    final activeTrade = _workerCategory!;
+
     return Container(
       color: AppColors.surface,
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Selector / Badge del Rubro Actual del Trabajador
+          // Badge del Rubro Registrado
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -372,7 +579,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: 18, color: AppColors.primary),
                   const SizedBox(width: 6),
                   Text(
-                    'Mi Rubro: $_workerCategory',
+                    'Mi Rubro: $activeTrade',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -381,58 +588,53 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              PopupMenuButton<String>(
-                initialValue: _workerCategory,
-                tooltip: 'Cambiar Rubro de Prueba',
-                onSelected: (val) {
-                  setState(() {
-                    _workerCategory = val;
-                  });
-                },
-                itemBuilder: (context) => [
-                  'Plomería',
-                  'Electricidad',
-                  'Cerrajería',
-                  'Pintura',
-                  'Carpintería',
-                ]
-                    .map((cat) => PopupMenuItem(
-                          value: cat,
-                          child: Text(cat),
-                        ))
-                    .toList(),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceElevated,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: const Row(
-                    children: [
-                      Text('Cambiar',
-                          style: TextStyle(
-                              fontSize: 11, color: AppColors.textSecondary)),
-                      Icon(Icons.arrow_drop_down,
-                          size: 16, color: AppColors.textSecondary),
-                    ],
-                  ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.primary),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded,
+                        size: 13, color: AppColors.primary),
+                    SizedBox(width: 4),
+                    Text(
+                      'Verificado',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
           const Divider(height: 16, color: AppColors.border),
 
-          // LÓGICA DE FILTRADO POR RUBRO
+          // LÓGICA DE FILTRADO POR RUBRO EN TIEMPO REAL DESDE FIRESTORE
           Expanded(
             child: SingleChildScrollView(
-              child: Builder(
-                builder: (context) {
-                  if (auctionState is AuctionActive) {
-                    final String subastaCategoria = auctionState.categoriaNombre;
+              physics: const BouncingScrollPhysics(),
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: FirestoreDataSource().escucharSubastasAbiertas(),
+                builder: (context, snapshot) {
+                  final List<Map<String, dynamic>> subastas =
+                      snapshot.data ?? [];
+
+                  if (subastas.isNotEmpty) {
+                    final Map<String, dynamic> subastaActiva = subastas.last;
+                    final String subastaId = subastaActiva['id'] ?? '';
+                    final String subastaCategoria =
+                        subastaActiva['categoria_nombre'] ?? 'General';
+                    final String descripcion =
+                        subastaActiva['descripcion'] ?? '';
+
                     final bool isMatch = subastaCategoria.trim().toLowerCase() ==
-                        _workerCategory.trim().toLowerCase();
+                        activeTrade.trim().toLowerCase();
 
                     // CASO 1: LA SOLICITUD COINCIDE CON EL RUBRO DEL TRABAJADOR
                     if (isMatch) {
@@ -481,7 +683,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'Servicio de ${auctionState.categoriaNombre}',
+                              'Servicio de $subastaCategoria',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
@@ -490,8 +692,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              auctionState.descripcion.isNotEmpty
-                                  ? auctionState.descripcion
+                              descripcion.isNotEmpty
+                                  ? descripcion
                                   : 'El cliente solicita servicio sin descripción.',
                               style: const TextStyle(
                                 fontSize: 13,
@@ -536,10 +738,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                     context.read<AuctionBloc>().add(
                                           OfferSubmittedRequested(
-                                            subastaId: auctionState.subastaId,
-                                            trabajadorId: 'trabajador_plomero_01',
+                                            subastaId: subastaId,
+                                            trabajadorId: 'trabajador_registrado_01',
                                             nombreTrabajador:
-                                                'Juan Pérez ($_workerCategory)',
+                                                'Juan Pérez ($activeTrade)',
                                             precio: precio,
                                           ),
                                         );
@@ -577,9 +779,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           const Icon(Icons.notifications_paused_outlined,
                               size: 36, color: AppColors.textMuted),
                           const SizedBox(height: 10),
-                          Text(
+                          const Text(
                             'Alerta no correspondiente a tu rubro',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
@@ -587,7 +789,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Existe una solicitud activa para "${auctionState.categoriaNombre}". Como tu rubro registrado es "$_workerCategory", esta alerta no te corresponde.',
+                            'Existe una solicitud activa para "$subastaCategoria". Como tu rubro registrado es "$activeTrade", esta alerta no te corresponde.',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 12,
@@ -609,7 +811,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             size: 40, color: AppColors.textMuted),
                         const SizedBox(height: 12),
                         Text(
-                          'Buscando trabajos de $_workerCategory...',
+                          'Buscando trabajos de $activeTrade...',
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,

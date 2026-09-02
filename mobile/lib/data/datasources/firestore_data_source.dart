@@ -74,4 +74,19 @@ class FirestoreDataSource {
       }).toList();
     });
   }
+
+  /// Escucha en tiempo real todas las subastas abiertas en Firestore
+  Stream<List<Map<String, dynamic>>> escucharSubastasAbiertas() {
+    return _firestore
+        .collection('subastas')
+        .where('estado', isEqualTo: 'ABIERTA')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
+  }
 }

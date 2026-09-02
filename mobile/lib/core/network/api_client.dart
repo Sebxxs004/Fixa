@@ -1,10 +1,16 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'auth_interceptor.dart';
 
 class ApiClient {
   late final Dio dio;
 
-  static const String _baseUrl = 'http://10.0.2.2:8080'; // 10.0.2.2 es localhost en el emulador de Android
+  static String get _baseUrl {
+    if (kIsWeb) {
+      return 'http://localhost:8080';
+    }
+    return 'http://10.0.2.2:8080'; // 10.0.2.2 es el loopback de localhost en el emulador de Android
+  }
 
   ApiClient() {
     dio = Dio(
@@ -21,7 +27,7 @@ class ApiClient {
 
     // Registramos nuestro interceptor de autenticación
     dio.interceptors.add(AuthInterceptor());
-    
+
     // Log interceptor opcional para depuración en desarrollo
     dio.interceptors.add(LogInterceptor(
       requestBody: true,
