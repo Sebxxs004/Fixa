@@ -40,6 +40,25 @@ class FirestoreDataSource {
     return docRef.id;
   }
 
+  /// Envía una oferta de un trabajador a una subasta específica en Firestore
+  Future<void> crearOferta({
+    required String subastaId,
+    required String trabajadorId,
+    required String nombreTrabajador,
+    required double precio,
+  }) async {
+    await _firestore
+        .collection('subastas')
+        .doc(subastaId)
+        .collection('ofertas')
+        .add({
+      'trabajador_id': trabajadorId,
+      'nombre_trabajador': nombreTrabajador,
+      'precio': precio,
+      'creado_en': FieldValue.serverTimestamp(),
+    });
+  }
+
   /// Escucha en tiempo real la subcolección de ofertas asociadas a una subasta específica
   Stream<List<Map<String, dynamic>>> escucharOfertas(String subastaId) {
     return _firestore

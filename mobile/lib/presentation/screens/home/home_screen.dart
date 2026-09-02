@@ -1,11 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 import '../../blocs/location/location_bloc.dart';
 import '../../blocs/location/location_event.dart';
 import '../../blocs/location/location_state.dart';
-import 'package:go_router/go_router.dart';
 import '../../blocs/auction/auction_bloc.dart';
 import '../../blocs/auction/auction_event.dart';
 import '../../blocs/auction/auction_state.dart';
@@ -26,6 +27,17 @@ class _HomeScreenState extends State<HomeScreen> {
   double? _selectedLat;
   double? _selectedLng;
 
+  bool _isWorkerMode = false;
+  String _workerCategory = 'Plomería';
+  final TextEditingController _offerPriceController = TextEditingController();
+
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    _offerPriceController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -39,7 +51,40 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Solicitar Servicio'),
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ChoiceChip(
+                label: const Text('Cliente'),
+                selected: !_isWorkerMode,
+                selectedColor: AppColors.primary,
+                labelStyle: TextStyle(
+                  color: !_isWorkerMode ? Colors.white : AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+                onSelected: (val) {
+                  if (val) setState(() => _isWorkerMode = false);
+                },
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('Trabajador'),
+                selected: _isWorkerMode,
+                selectedColor: AppColors.primary,
+                labelStyle: TextStyle(
+                  color: _isWorkerMode ? Colors.white : AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+                onSelected: (val) {
+                  if (val) setState(() => _isWorkerMode = true);
+                },
+              ),
+            ],
+          ),
           centerTitle: true,
           actions: [
             IconButton(
@@ -93,15 +138,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 );
-            } else if (auctionState is AuctionFailure) {
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(
-                    content: Text(auctionState.message),
-                    backgroundColor: Colors.red,
-                  ),
-                );
             }
           },
           child: BlocBuilder<LocationBloc, LocationState>(
@@ -111,9 +147,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CircularProgressIndicator(),
+                      CircularProgressIndicator(color: AppColors.primary),
                       SizedBox(height: 16),
-                      Text('Buscando señal GPS...'),
+                      Text('Obteniendo tu ubicación actual...'),
                     ],
                   ),
                 );
@@ -126,20 +162,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.location_off, size: 64, color: Colors.red),
+                        const Icon(Icons.location_off_rounded,
+                            size: 48, color: AppColors.error),
                         const SizedBox(height: 16),
-                        Text(
-                          state.message,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
+                        Text(state.message, textAlign: TextAlign.center),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
                           onPressed: () {
-                            context.read<LocationBloc>().add(LoadLocationRequested());
+                            context
+                                .read<LocationBloc>()
+                                .add(LoadLocationRequested());
                           },
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Reintentar'),
+                          child: const Text('Reintentar'),
                         ),
                       ],
                     ),
@@ -190,7 +224,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       },
                                     ),
-                              if (!isAuctionActive)
+                              // Botón de solicitar servicio (Solo en Modo Cliente y si no hay subasta activa)
+                              if (!isAuctionActive && !_isWorkerMode)
                                 Positioned(
                                   bottom: 24.0,
                                   left: 24.0,
@@ -245,56 +280,66 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        // Listado inferior de ofertas: Se muestra cuando la subasta está activa
-                        if (isAuctionActive)
+
+                        // MODO TRABAJADOR vs MODO CLIENTE
+                        if (_isWorkerMode) ...[
+                          // PANEL DEL TRABAJADOR CON FILTRADO POR RUBRO
                           Expanded(
                             flex: 1,
-                            child: Container(
-                              color: Colors.white,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12.0,
-                                      horizontal: 16.0,
-                                    ),
-                                    color: Colors.grey[100],
-                                    child: const Text(
-                                      'Esperando cotizaciones...',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primary,
+                            child: _buildWorkerAlertPanel(context, auctionState),
+                          ),
+                        ] else ...[
+                          // MODO CLIENTE: Listado de ofertas recibidas cuando la subasta está activa
+                          if (isAuctionActive)
+                            Expanded(
+                              flex: 1,
+                              child: Container(
+                                color: Colors.white,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12.0,
+                                        horizontal: 16.0,
+                                      ),
+                                      color: Colors.grey[100],
+                                      child: const Text(
+                                        'Esperando cotizaciones...',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primary,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  Expanded(
-                                    child: ListView.builder(
-                                      itemCount: auctionState.ofertas.length,
-                                      itemBuilder: (context, index) {
-                                        final oferta = auctionState.ofertas[index];
-                                        return OfferCard(
-                                          oferta: oferta,
-                                          onAccept: () {
-                                            context.read<AuctionBloc>().add(
-                                                  AcceptOfferRequested(
-                                                    subastaId: auctionState.subastaId,
-                                                    trabajadorId: oferta['trabajador_id'] ?? '',
-                                                    montoAcordado: (oferta['precio'] is num)
-                                                        ? (oferta['precio'] as num).toDouble()
-                                                        : double.parse(oferta['precio']?.toString() ?? '0.0'),
-                                                  ),
-                                                );
-                                          },
-                                        );
-                                      },
+                                    Expanded(
+                                      child: ListView.builder(
+                                        itemCount: auctionState.ofertas.length,
+                                        itemBuilder: (context, index) {
+                                          final oferta = auctionState.ofertas[index];
+                                          return OfferCard(
+                                            oferta: oferta,
+                                            onAccept: () {
+                                              context.read<AuctionBloc>().add(
+                                                    AcceptOfferRequested(
+                                                      subastaId: auctionState.subastaId,
+                                                      trabajadorId: oferta['trabajador_id'] ?? '',
+                                                      montoAcordado: (oferta['precio'] is num)
+                                                          ? (oferta['precio'] as num).toDouble()
+                                                          : double.parse(oferta['precio']?.toString() ?? '0.0'),
+                                                    ),
+                                                  );
+                                            },
+                                          );
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
+                        ],
                       ],
                     );
                   },
@@ -309,9 +354,286 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  @override
-  void dispose() {
-    _mapController?.dispose();
-    super.dispose();
+  // WIDGET DEL PANEL DE TRABAJADOR CON FILTRADO POR RUBRO COINCIDENCIAL
+  Widget _buildWorkerAlertPanel(BuildContext context, AuctionState auctionState) {
+    return Container(
+      color: AppColors.surface,
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Selector / Badge del Rubro Actual del Trabajador
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.handyman_rounded,
+                      size: 18, color: AppColors.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Mi Rubro: $_workerCategory',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              PopupMenuButton<String>(
+                initialValue: _workerCategory,
+                tooltip: 'Cambiar Rubro de Prueba',
+                onSelected: (val) {
+                  setState(() {
+                    _workerCategory = val;
+                  });
+                },
+                itemBuilder: (context) => [
+                  'Plomería',
+                  'Electricidad',
+                  'Cerrajería',
+                  'Pintura',
+                  'Carpintería',
+                ]
+                    .map((cat) => PopupMenuItem(
+                          value: cat,
+                          child: Text(cat),
+                        ))
+                    .toList(),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: const Row(
+                    children: [
+                      Text('Cambiar',
+                          style: TextStyle(
+                              fontSize: 11, color: AppColors.textSecondary)),
+                      Icon(Icons.arrow_drop_down,
+                          size: 16, color: AppColors.textSecondary),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 16, color: AppColors.border),
+
+          // LÓGICA DE FILTRADO POR RUBRO
+          Expanded(
+            child: SingleChildScrollView(
+              child: Builder(
+                builder: (context) {
+                  if (auctionState is AuctionActive) {
+                    final String subastaCategoria = auctionState.categoriaNombre;
+                    final bool isMatch = subastaCategoria.trim().toLowerCase() ==
+                        _workerCategory.trim().toLowerCase();
+
+                    // CASO 1: LA SOLICITUD COINCIDE CON EL RUBRO DEL TRABAJADOR
+                    if (isMatch) {
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.primary, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withAlpha(20),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    '¡NUEVA ALERTA DE TRABAJO!',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                const Spacer(),
+                                const Text(
+                                  'Hace un momento',
+                                  style: TextStyle(
+                                      fontSize: 11, color: AppColors.textMuted),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Servicio de ${auctionState.categoriaNombre}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              auctionState.descripcion.isNotEmpty
+                                  ? auctionState.descripcion
+                                  : 'El cliente solicita servicio sin descripción.',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Campo para ingresar cotización / oferta
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _offerPriceController,
+                                    keyboardType: TextInputType.number,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Tu precio (\$)',
+                                      isDense: true,
+                                      contentPadding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 10),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                  ),
+                                  onPressed: () {
+                                    final text = _offerPriceController.text.trim();
+                                    final precio = double.tryParse(text) ?? 50000.0;
+
+                                    context.read<AuctionBloc>().add(
+                                          OfferSubmittedRequested(
+                                            subastaId: auctionState.subastaId,
+                                            trabajadorId: 'trabajador_plomero_01',
+                                            nombreTrabajador:
+                                                'Juan Pérez ($_workerCategory)',
+                                            precio: precio,
+                                          ),
+                                        );
+
+                                    _offerPriceController.clear();
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: AppColors.primary,
+                                        behavior: SnackBarBehavior.floating,
+                                        content: Text(
+                                            'Cotización de \$$precio enviada con éxito.'),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('Enviar Precio'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    // CASO 2: LA SOLICITUD ES DE UN RUBRO DISTINTO (NO MATCH)
+                    return Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceElevated,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.notifications_paused_outlined,
+                              size: 36, color: AppColors.textMuted),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Alerta no correspondiente a tu rubro',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Existe una solicitud activa para "${auctionState.categoriaNombre}". Como tu rubro registrado es "$_workerCategory", esta alerta no te corresponde.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  // CASO 3: SIN SUBASTAS ACTIVAS
+                  return Container(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.radar_rounded,
+                            size: 40, color: AppColors.textMuted),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Buscando trabajos de $_workerCategory...',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Te notificaremos automáticamente cuando un cliente solicite un servicio en tu rubro.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

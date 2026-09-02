@@ -35,6 +35,23 @@ class BroadcastRequested extends AuctionEvent {
       ];
 }
 
+class OfferSubmittedRequested extends AuctionEvent {
+  final String subastaId;
+  final String trabajadorId;
+  final String nombreTrabajador;
+  final double precio;
+
+  const OfferSubmittedRequested({
+    required this.subastaId,
+    required this.trabajadorId,
+    required this.nombreTrabajador,
+    required this.precio,
+  });
+
+  @override
+  List<Object?> get props => [subastaId, trabajadorId, nombreTrabajador, precio];
+}
+
 class AcceptOfferRequested extends AuctionEvent {
   final String subastaId;
   final String trabajadorId;

@@ -14,6 +14,7 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
         _firestoreDataSource = firestoreDataSource,
         super(AuctionInitial()) {
     on<BroadcastRequested>(_onBroadcastRequested);
+    on<OfferSubmittedRequested>(_onOfferSubmittedRequested);
     on<AcceptOfferRequested>(_onAcceptOfferRequested);
   }
 
@@ -64,7 +65,14 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
       await emit.forEach<List<Map<String, dynamic>>>(
         dataSource.escucharOfertas(subastaId),
         onData: (ofertas) {
-          return AuctionActive(subastaId: subastaId, ofertas: ofertas);
+          return AuctionActive(
+            subastaId: subastaId,
+            categoriaId: event.categoriaId,
+            categoriaNombre: event.categoriaNombre,
+            descripcion: event.descripcion,
+            fotos: event.fotos,
+            ofertas: ofertas,
+          );
         },
         onError: (error, stackTrace) {
           return AuctionFailure(
@@ -104,6 +112,23 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
       }
     } catch (e) {
       emit(AuctionFailure('Error al aceptar la oferta: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onOfferSubmittedRequested(
+    OfferSubmittedRequested event,
+    Emitter<AuctionState> emit,
+  ) async {
+    try {
+      final dataSource = _firestoreDataSource ?? FirestoreDataSource();
+      await dataSource.crearOferta(
+        subastaId: event.subastaId,
+        trabajadorId: event.trabajadorId,
+        nombreTrabajador: event.nombreTrabajador,
+        precio: event.precio,
+      );
+    } catch (e) {
+      // Manejo de error al enviar la oferta
     }
   }
 }
