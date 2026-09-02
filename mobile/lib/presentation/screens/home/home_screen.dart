@@ -31,7 +31,14 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isWorkerMode = false;
   bool _isWorkerRegistered = false;
   String? _workerCategory;
+  late final Stream<List<Map<String, dynamic>>> _subastasStream;
   final TextEditingController _offerPriceController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _subastasStream = FirestoreDataSource().escucharSubastasAbiertas();
+  }
 
   String _normalizeString(String text) {
     return text
@@ -195,7 +202,9 @@ class _HomeScreenState extends State<HomeScreen> {
           create: (context) => AuctionBloc(),
         ),
       ],
-      child: Scaffold(
+      child: Builder(
+        builder: (homeContext) {
+          return Scaffold(
         appBar: AppBar(
           backgroundColor: AppColors.surface,
           elevation: 0,
@@ -399,7 +408,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                               required String descripcion,
                                               required List<String> fotos,
                                             }) {
-                                              context.read<AuctionBloc>().add(
+                                              Navigator.of(sheetContext).pop();
+                                              homeContext.read<AuctionBloc>().add(
                                                     BroadcastRequested(
                                                       latitude: _selectedLat ?? state.latitude,
                                                       longitude: _selectedLng ?? state.longitude,
@@ -496,9 +506,11 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-      ),
-    );
-  }
+      );
+    },
+  ),
+);
+}
 
   // WIDGET DEL PANEL DE TRABAJADOR CON VALIDADOR FIRESTORE EN TIEMPO REAL
   Widget _buildWorkerAlertPanel(BuildContext context, AuctionState auctionState) {
@@ -631,7 +643,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: FirestoreDataSource().escucharSubastasAbiertas(),
+                stream: _subastasStream,
                 builder: (context, snapshot) {
                   final List<Map<String, dynamic>> subastas =
                       snapshot.data ?? [];

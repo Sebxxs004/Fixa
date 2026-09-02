@@ -21,15 +21,33 @@ class PhotoPickerGrid extends StatelessWidget {
 
     try {
       final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: source,
-        imageQuality: 80,
-        maxWidth: 1024,
-      );
 
-      if (image != null) {
-        final updated = List<String>.from(photos)..add(image.path);
-        onPhotosChanged(updated);
+      if (source == ImageSource.gallery) {
+        // Permite selección múltiple de fotos al tiempo desde la galería
+        final List<XFile> images = await picker.pickMultiImage(
+          imageQuality: 80,
+          maxWidth: 1024,
+        );
+
+        if (images.isNotEmpty) {
+          final int remainingCapacity = maxPhotos - photos.length;
+          final List<String> newPaths =
+              images.take(remainingCapacity).map((img) => img.path).toList();
+          final updated = List<String>.from(photos)..addAll(newPaths);
+          onPhotosChanged(updated);
+        }
+      } else {
+        // Tomar 1 foto directa desde la cámara
+        final XFile? image = await picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 80,
+          maxWidth: 1024,
+        );
+
+        if (image != null) {
+          final updated = List<String>.from(photos)..add(image.path);
+          onPhotosChanged(updated);
+        }
       }
     } catch (e) {
       if (context.mounted) {
@@ -74,7 +92,7 @@ class PhotoPickerGrid extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Agregar Foto de Evidencia',
+              'Agregar Evidencia Fotográfica',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -107,11 +125,8 @@ class PhotoPickerGrid extends StatelessWidget {
                         color: AppColors.primary,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.camera_alt_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+                      child: const Icon(Icons.camera_alt_rounded,
+                          color: Colors.white, size: 20),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -123,7 +138,7 @@ class PhotoPickerGrid extends StatelessWidget {
                               const Text(
                                 'Tomar Foto',
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textPrimary,
                                 ),
@@ -132,9 +147,9 @@ class PhotoPickerGrid extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.all(Radius.circular(4)),
                                 ),
                                 child: const Text(
                                   'Recomendado',
@@ -147,9 +162,9 @@ class PhotoPickerGrid extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 2),
-                          const Text(
-                            'Abre la cámara para fotografiar el problema',
+                          SizedBox(height: 2),
+                          Text(
+                            'Abre la cámara de tu teléfono para captura directa',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
@@ -158,13 +173,15 @@ class PhotoPickerGrid extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const Icon(Icons.chevron_right_rounded,
+                        color: AppColors.textMuted),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 12),
 
-            // Opción 2: Elegir de la Galería
+            // Opción 2: Escoger MÚLTIPLES fotos de Galería
             InkWell(
               onTap: () {
                 Navigator.of(ctx).pop();
@@ -183,15 +200,11 @@ class PhotoPickerGrid extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: AppColors.primary.withAlpha(20),
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.border, width: 1),
                       ),
-                      child: const Icon(
-                        Icons.photo_library_rounded,
-                        color: AppColors.textPrimary,
-                        size: 20,
-                      ),
+                      child: const Icon(Icons.photo_library_rounded,
+                          color: AppColors.primary, size: 20),
                     ),
                     const SizedBox(width: 14),
                     const Expanded(
@@ -199,16 +212,16 @@ class PhotoPickerGrid extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Elegir de la Galería',
+                            'Seleccionar varias fotos de Galería',
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
                             ),
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Abre la galería del teléfono para adjuntar fotos',
+                            'Selecciona varias imágenes al tiempo de tu galería',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
@@ -217,41 +230,15 @@ class PhotoPickerGrid extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const Icon(Icons.chevron_right_rounded,
+                        color: AppColors.textMuted),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildImageWidget(String photoUrl) {
-    if (photoUrl.startsWith('http') || photoUrl.startsWith('blob:')) {
-      return Image.network(
-        photoUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => const Center(
-          child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted),
-        ),
-      );
-    }
-    if (!kIsWeb) {
-      return Image.file(
-        File(photoUrl),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => const Center(
-          child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted),
-        ),
-      );
-    }
-    return Image.network(
-      photoUrl,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => const Center(
-        child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted),
       ),
     );
   }
@@ -265,37 +252,28 @@ class PhotoPickerGrid extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Fotos de Evidencia del Problema',
+              'Evidencia Fotográfica del Problema',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
-                letterSpacing: -0.1,
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceElevated,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.border, width: 1),
-              ),
-              child: Text(
-                '${photos.length} / $maxPhotos',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: photos.length == maxPhotos
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
-                ),
+            Text(
+              '${photos.length} / $maxPhotos fotos',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: photos.length >= maxPhotos
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
 
-        // Grid de fotos
+        // Grilla de fotos seleccionadas + Botón de agregar
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -307,14 +285,13 @@ class PhotoPickerGrid extends StatelessWidget {
           ),
           itemCount: photos.length < maxPhotos ? photos.length + 1 : photos.length,
           itemBuilder: (context, index) {
-            if (index == photos.length && photos.length < maxPhotos) {
-              // Card para agregar nueva foto
+            if (index == photos.length) {
               return InkWell(
                 onTap: () => _showImageSourcePicker(context),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: AppColors.surfaceElevated,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: AppColors.border,
@@ -324,18 +301,15 @@ class PhotoPickerGrid extends StatelessWidget {
                   child: const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.add_a_photo_outlined,
-                        size: 24,
-                        color: AppColors.textSecondary,
-                      ),
-                      SizedBox(height: 4),
+                      Icon(Icons.add_a_photo_rounded,
+                          size: 26, color: AppColors.textPrimary),
+                      SizedBox(height: 6),
                       Text(
-                        'Agregar',
+                        'Agregar Fotos',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -344,24 +318,29 @@ class PhotoPickerGrid extends StatelessWidget {
               );
             }
 
-            final String photoUrl = photos[index];
-
+            final photoPath = photos[index];
             return Stack(
               clipBehavior: Clip.none,
               children: [
-                Container(
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border, width: 1),
-                  ),
-                  child: SizedBox.expand(
-                    child: _buildImageWidget(photoUrl),
-                  ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: kIsWeb
+                      ? Image.network(
+                          photoPath,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        )
+                      : Image.file(
+                          File(photoPath),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
                 ),
                 Positioned(
-                  top: -6,
-                  right: -6,
+                  top: 4,
+                  right: 4,
                   child: GestureDetector(
                     onTap: () => _removePhoto(index),
                     child: Container(
@@ -371,7 +350,7 @@ class PhotoPickerGrid extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.close,
+                        Icons.close_rounded,
                         size: 14,
                         color: Colors.white,
                       ),

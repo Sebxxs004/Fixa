@@ -58,8 +58,17 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
         }
       }
 
-      // Emitir éxito inicial en el broadcast antes de suscribirse al Stream
-      emit(AuctionBroadcastSuccess());
+      // Emitir inmediatamente AuctionActive para cambiar la UI del Cliente al instante
+      emit(
+        AuctionActive(
+          subastaId: subastaId,
+          categoriaId: event.categoriaId,
+          categoriaNombre: event.categoriaNombre,
+          descripcion: event.descripcion,
+          fotos: event.fotos,
+          ofertas: const [],
+        ),
+      );
 
       // 3. Conectarse y escuchar la subcolección de ofertas en tiempo real de Firestore
       await emit.forEach<List<Map<String, dynamic>>>(
@@ -101,17 +110,19 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data =
-            (response.data is Map<String, dynamic>)
-                ? response.data
-                : {'subastaId': event.subastaId, 'status': 'ACEPTADA_EN_CAMINO'};
-
+            response.data is Map<String, dynamic>
+                ? response.data as Map<String, dynamic>
+                : <String, dynamic>{
+                    'subastaId': event.subastaId,
+                    'trabajadorId': event.trabajadorId,
+                    'montoAcordado': event.montoAcordado,
+                  };
         emit(AuctionOfferAccepted(data));
       } else {
-        emit(const AuctionFailure(
-            'No se pudo procesar la aceptación de la oferta.'));
+        emit(const AuctionFailure('El backend no pudo confirmar el contrato.'));
       }
     } catch (e) {
-      emit(AuctionFailure('Error al aceptar la oferta: ${e.toString()}'));
+      emit(AuctionFailure('Error al aceptar oferta: ${e.toString()}'));
     }
   }
 
@@ -128,7 +139,7 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
         precio: event.precio,
       );
     } catch (e) {
-      // Manejo de error al enviar la oferta
+      emit(AuctionFailure('Fallo al enviar oferta: ${e.toString()}'));
     }
   }
 }
