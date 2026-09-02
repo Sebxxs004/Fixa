@@ -33,6 +33,17 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _workerCategory;
   final TextEditingController _offerPriceController = TextEditingController();
 
+  String _normalizeString(String text) {
+    return text
+        .trim()
+        .toLowerCase()
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u');
+  }
+
   @override
   void dispose() {
     _mapController?.dispose();
@@ -633,8 +644,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     final String descripcion =
                         subastaActiva['descripcion'] ?? '';
 
-                    final bool isMatch = subastaCategoria.trim().toLowerCase() ==
-                        activeTrade.trim().toLowerCase();
+                    final bool isMatch = _normalizeString(subastaCategoria) ==
+                        _normalizeString(activeTrade);
 
                     // CASO 1: LA SOLICITUD COINCIDE CON EL RUBRO DEL TRABAJADOR
                     if (isMatch) {

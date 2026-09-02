@@ -75,18 +75,18 @@ class FirestoreDataSource {
     });
   }
 
-  /// Escucha en tiempo real todas las subastas abiertas en Firestore
+  /// Escucha en tiempo real todas las subastas en Firestore y filtra las abiertas
   Stream<List<Map<String, dynamic>>> escucharSubastasAbiertas() {
-    return _firestore
-        .collection('subastas')
-        .where('estado', isEqualTo: 'ABIERTA')
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).toList();
+    return _firestore.collection('subastas').snapshots().map((snapshot) {
+      return snapshot.docs
+          .map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return data;
+          })
+          .where((subasta) =>
+              subasta['estado'] == null || subasta['estado'] == 'ABIERTA')
+          .toList();
     });
   }
 }

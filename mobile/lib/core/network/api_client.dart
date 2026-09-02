@@ -16,8 +16,8 @@ class ApiClient {
     dio = Dio(
       BaseOptions(
         baseUrl: _baseUrl,
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
+        connectTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 5),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -28,10 +28,11 @@ class ApiClient {
     // Registramos nuestro interceptor de autenticación
     dio.interceptors.add(AuthInterceptor());
 
-    // Log interceptor opcional para depuración en desarrollo
+    // Log interceptor silencioso ante offline
     dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,
+      error: false,
     ));
   }
 }
