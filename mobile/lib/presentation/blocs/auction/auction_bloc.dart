@@ -36,22 +36,26 @@ class AuctionBloc extends Bloc<AuctionEvent, AuctionState> {
         fotos: event.fotos,
       );
 
-      // 2. Notificar al backend sobre la nueva subasta para iniciar el broadcast espacial
-      try {
-        await _dio.post(
-          '/api/v1/auctions/broadcast',
-          data: {
-            'categoriaId': event.categoriaId,
-            'categoriaNombre': event.categoriaNombre,
-            'descripcion': event.descripcion,
-            'fotos': event.fotos,
-            'latitud': event.latitude,
-            'longitud': event.longitude,
-            'subastaId': subastaId,
-          },
-        );
-      } catch (e) {
-        // En entorno local o sin backend HTTP activo, continuar con Firestore directo
+      // 2. Notificar al backend HTTP únicamente si el servidor Spring Boot está activo
+      final bool enableHttpBackend =
+          bool.fromEnvironment('ENABLE_HTTP_BACKEND', defaultValue: false);
+      if (enableHttpBackend) {
+        try {
+          await _dio.post(
+            '/api/v1/auctions/broadcast',
+            data: {
+              'categoriaId': event.categoriaId,
+              'categoriaNombre': event.categoriaNombre,
+              'descripcion': event.descripcion,
+              'fotos': event.fotos,
+              'latitud': event.latitude,
+              'longitud': event.longitude,
+              'subastaId': subastaId,
+            },
+          );
+        } catch (_) {
+          // En entorno local o sin backend HTTP activo, continuar con Firestore directo
+        }
       }
 
       // Emitir éxito inicial en el broadcast antes de suscribirse al Stream
